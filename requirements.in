@@ -1,0 +1,11 @@
+beautifulsoup4
+bs4
+isort
+lxml
+pdfminer.six
+pycodestyle
+pylint
+pytest
+pytest-mock
+requests
+selenium
