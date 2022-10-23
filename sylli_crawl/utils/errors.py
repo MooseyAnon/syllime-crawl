@@ -1,6 +1,8 @@
 # pylint: disable = unspecified-encoding
 """Project wide error handling."""
 from datetime import datetime
+import logging
+import logging.config
 from pathlib import Path
 
 import requests
@@ -18,6 +20,11 @@ class ConsentParseError(ValueError):
 
 class ParseError(ValueError):
     """Could not find any of the CSS classes/IDs or HTML tags."""
+
+
+# set the logging config file
+logging.config.fileConfig("logging.ini")
+logger = logging.getLogger(__name__)
 
 
 def get(url):
@@ -68,4 +75,4 @@ def save_test_html(url, tests_file_path):
     with open(full_path, "w") as fd:
         fd.write(resp.text)
 
-    print("Saved File")
+    logger.info("saved file to %s", full_path)
