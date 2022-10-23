@@ -1,0 +1,2 @@
+# ignore HTML files used for testing crawler
+tests/html-files/* linguist-vendored
