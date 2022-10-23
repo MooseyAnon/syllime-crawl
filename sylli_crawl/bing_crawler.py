@@ -52,6 +52,7 @@ class BingCrawler(crawler_base.Crawler):
         """Handle errors parsing SERP.
 
         :param bs4.BeautifulSoup bs4_obj: parsed HTML page
+        :raises errors.ParseError: when no CSS match is found
         """
         err_container = bs4_obj.find(
             "li", attrs={"class": "b_no"})
@@ -62,7 +63,7 @@ class BingCrawler(crawler_base.Crawler):
             err_msg = (
                 "None of the previously matched css classes have been found. "
                 "Page may have changed.")
-            print(errors.ParseError(err_msg))
+            raise errors.ParseError(err_msg)
 
     def parse_with_retry(
         self, full_url, retries=10, backoff=1.5, max_wait=15
@@ -159,8 +160,11 @@ class BingCrawler(crawler_base.Crawler):
                 break
 
         if not search_res:
-            self._handle_parse_error(bs4_obj)
-            return None
+            try:
+                self._handle_parse_error(bs4_obj)
+            except errors.ParseError as err:
+                logger.error(err)
+                return None
 
         out_arr = []
         for res in search_res:
