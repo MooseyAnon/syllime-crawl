@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import (
-    NoSuchCookieException, WebDriverException)
+    NoSuchElementException, WebDriverException)
 
 from sylli_crawl import crawler_base
 
@@ -174,7 +174,7 @@ class YoutubeCrawler(crawler_base.Crawler):
                 button.click()
             self.consent_passed = True
 
-        except NoSuchCookieException as e:
+        except NoSuchElementException as e:
             logger.error("Could not find 'Reject All' button: %s", e)
 
     def has_modal(self, bs4_obj):
