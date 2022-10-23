@@ -1,5 +1,7 @@
 # pylint: disable=arguments-differ, no-self-use, consider-using-f-string
 """Crawler for Bing search engine."""
+import logging
+import logging.config
 import time
 
 from bs4 import BeautifulSoup
@@ -23,6 +25,10 @@ HTML_ELEMENT = "li"
 
 # the element that contains the search results
 SER_CONTAINER_OBJ = "ol"
+
+# set the logging config file
+logging.config.fileConfig("logging.ini")
+logger = logging.getLogger("bing-crawler")
 
 
 class BingCrawler(crawler_base.Crawler):
@@ -51,7 +57,7 @@ class BingCrawler(crawler_base.Crawler):
             "li", attrs={"class": "b_no"})
         if err_container and err_container.find("h1"):
             err_msg = err_container.find("h1").text
-            print("ERROR: ", err_msg)
+            logger.error(err_msg)
         else:
             err_msg = (
                 "None of the previously matched css classes have been found. "
@@ -92,8 +98,10 @@ class BingCrawler(crawler_base.Crawler):
                 break
 
             # backoff
-            print(f"Did not get any results after {attempts} attempts, "
-                  f"sleeping for {next_wait_time}")
+            logger.info(
+                "Did not get any results after %s attempts, sleeping for %s",
+                attempts, next_wait_time
+            )
             time.sleep(next_wait_time)
             attempts += 1
             next_wait_time *= backoff
@@ -147,7 +155,7 @@ class BingCrawler(crawler_base.Crawler):
             search_res = ol_container.find_all(
                 f"{HTML_ELEMENT}", attrs={"class": f"{css_class}"})
             if search_res:
-                print(f"Found matching css class: {css_class}")
+                logger.info("Found matching CSS class: %s", css_class)
                 break
 
         if not search_res:
@@ -183,13 +191,15 @@ class BingCrawler(crawler_base.Crawler):
         :return: an array of links from Bings SERP
         :rtype: list[str]
         """
-        print("constructing url...")
+        logger.info("constructing url...")
         # construct url
         full_url = self.construct_query(query, page)
-        print(f"constructed url: {full_url}")
+        logger.info("calling: %s", full_url)
         out = self.parse_with_retry(full_url)
         if not out:
-            print(
-                f"No search results matching the query: {query}, dumping file")
+            logger.error(
+                "No search results matching query, dumping HTML. "
+                "Query: %s", query
+            )
             errors.dump_html(self.parsed_html, "bing")
         return out
