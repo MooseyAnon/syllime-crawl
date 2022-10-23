@@ -3,6 +3,8 @@
 import argparse
 import csv
 import json
+import logging
+import logging.config
 import pathlib
 import random
 import time
@@ -18,6 +20,10 @@ ENGINES = {
     "google": google_crawler.GoogleCrawler,
 }
 
+# set the logging config file
+logging.config.fileConfig("logging.ini")
+logger = logging.getLogger("crawl")
+
 
 def fetch_query(query, result_set, engines, pages=1):
     """Fetch a search query for a given search engine.
@@ -31,7 +37,7 @@ def fetch_query(query, result_set, engines, pages=1):
     :rtype: set(str)
     """
     for page in range(1, pages + 1):
-        print(f"fetching page {page}")
+        logger.info("fetching page: %s", page)
         for search_engine in engines:
             res = search_engine.fetch(query, page=page)
             if res:
@@ -65,7 +71,7 @@ def write_query(query, res_set):
             for line in res_set:
                 writer.writerow([line])
     except OSError as e:
-        print(f"ERROR: {e}")
+        logger.error(e)
         exit_status = 1
 
     return exit_status
@@ -78,7 +84,7 @@ def wait(start=6, end=45):
     :param int end: endo of the range
     """
     sleep_time = random.choice(range(start, end))
-    print(f"INFO: sleeping for {sleep_time}")
+    logger.info("sleeping for %s", sleep_time)
     time.sleep(sleep_time)
 
 
@@ -103,23 +109,23 @@ def search_engine_crawler(args):
     :rtype: int
     """
     if not args.query and not args.query_file:
-        print("ERROR: query or query file required")
+        logger.error("query or query file required")
         return 1
 
     if args.query and args.query_file:
-        print("ERROR: query cannot be used in conjunction with query file")
+        logger.error("query cannot be used in conjunction with query file")
         return 1
 
     if args.query_file and not (QUERY_FOLDER / args.query_file).exists():
-        print("ERROR: query file does not exist")
+        logger.error("query file does not exist")
         return 1
 
     if args.search_engine and args.search_engine not in ENGINES:
-        print("ERROR: search engine must be google or bing")
+        logger.error("search engine must be google or bing")
         return 1
 
     if args.pages < 1:
-        print("ERROR: must have one or more pages")
+        logger.error("must have one or more pages")
         return 1
 
     # init crawlers and add to arr
@@ -160,15 +166,15 @@ def web_crawler(args):
     :rtype: int
     """
     if args.link_file and not args.link_file.exists():
-        print("ERROR: link file does not exist")
+        logger.error("link file does not exist")
         return 1
 
     if args.link_file and args.url:
-        print("ERROR: cannot have both a link file and a url")
+        logger.error("cannot have both a link file and a url")
         return 1
 
     if not args.link_file and not args.url:
-        print("ERORR: you need either a link file or a url to scrape")
+        logger.error("you need either a link file or a url to scrape")
         return 1
 
     # init crawler singletons
@@ -188,7 +194,7 @@ def web_crawler(args):
                     out = js.fetch(url)
 
                 elif url.endswith(".pdf"):
-                    print("currently unable to parse PFDs")
+                    logger.warning("currently unable to parse PFDs")
 
                 else:
                     out = html.fetch(url)
@@ -200,7 +206,7 @@ def web_crawler(args):
             out = js.fetch(args.url)
 
         elif args.url.endswith(".pdf"):
-            print("currently unable to parse PFDs")
+            logger.warning("currently unable to parse PFDs")
 
         else:
             out = html.fetch(args.url)

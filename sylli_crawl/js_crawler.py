@@ -2,6 +2,8 @@
 # pylint: disable=arguments-renamed
 """Crawl a JavaScript sites"""
 from contextlib import contextmanager
+import logging
+import logging.config
 from pathlib import Path
 import pickle
 import time
@@ -29,6 +31,10 @@ VIDEO_TITLE_CLASS_NAMES = "title style-scope ytd-video-primary-info-renderer"
 # browser height and width
 WIDTH = "1920"
 HEIGHT = "1080"
+
+# set the logging config file
+logging.config.fileConfig("logging.ini")
+logger = logging.getLogger("js-crawler")
 
 
 class KhanAcademyCralwer(crawler_base.Crawler):
@@ -139,14 +145,14 @@ class YoutubeCrawler(crawler_base.Crawler):
         if not self.cookie_file.exists():
             with open(self.cookie_file, "wb") as fd:
                 pickle.dump(driver.get_cookies(), fd)
-            print("loaded saved cookies")
+            logger.info("loaded saved cookies")
 
     def load_cookies(self, driver):
         """Load saved cookies.
 
         :param selenium.webdriver driver: the browser driver
         """
-        print("loading cookies...")
+        logger.info("loading cookies...")
         if self.cookie_file.exists():
             with open(self.cookie_file, "rb") as fd:
                 content = pickle.load(fd)
@@ -154,7 +160,7 @@ class YoutubeCrawler(crawler_base.Crawler):
                     driver.add_cookie(cookie)
             # test if this is needed
             driver.refresh()
-            print("refreshed browser")
+            logger.info("refreshed browser")
 
     def consent(self, driver):
         """Navigate youtube consent form.
@@ -164,12 +170,12 @@ class YoutubeCrawler(crawler_base.Crawler):
         try:
             button = driver.find_element(By.XPATH, REJECT_ALL_XPATH)
             if button:
-                print("found the reject all button")
+                logger.info("found 'Reject All' button")
                 button.click()
             self.consent_passed = True
 
         except NoSuchCookieException as e:
-            print("could not find reject all button: ", e)
+            logger.error("Could not find 'Reject All' button: %s", e)
 
     def has_modal(self, bs4_obj):
         """Check if page has modal.
@@ -285,10 +291,10 @@ def get_driver():
         yield driver
 
     except WebDriverException as e:
-        print("problem getting driver ", e)
+        logger.error("webdriver exception: %s", e)
 
     finally:
-        print("closing driver")
+        logger.info("closing driver")
         driver.close()
         driver.quit()
 

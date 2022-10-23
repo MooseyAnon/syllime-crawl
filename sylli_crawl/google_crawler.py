@@ -1,5 +1,7 @@
 # pylint: disable=arguments-differ, no-self-use, consider-using-f-string
 """Crawler for Google search engine."""
+import logging
+import logging.config
 import re
 import time
 
@@ -25,6 +27,10 @@ HTML_ELEMENT = "div"
 
 # tag for video area on SREP
 VIDEO_ELEMENT_TAG = "video-voyager"
+
+# set the logging config file
+logging.config.fileConfig("logging.ini")
+logger = logging.getLogger("google-crawler")
 
 
 class GoogleCrawler(crawler_base.Crawler):
@@ -164,7 +170,8 @@ class GoogleCrawler(crawler_base.Crawler):
                 elif t == r"\x26":
                     out.append("&")
                 else:
-                    print(f"Unrecognised encoded char, {t}")
+                    logger.warning(
+                        "unrecognised encoded character: %s", t)
 
             out.append(s[char])
 
@@ -173,7 +180,7 @@ class GoogleCrawler(crawler_base.Crawler):
         m = "".join(out)
         url = f"{self.consent_url}?{self._build_consent_url(m)}"
         # send post request to pass consent page
-        print(f"preparing to send: {url}")
+        logger.info("consent url: %s", url)
         resp = self._request("post", url, data=None, headers=self.headers)
         # this is a no content request so should return 204
         if not resp or resp.status_code not in range(200, 211):
@@ -224,8 +231,10 @@ class GoogleCrawler(crawler_base.Crawler):
         """
         if self.has_modal(bs4_obj):
             wait_time = 5
-            print("WARNING: has consent modal, "
-                  f"waiting {wait_time}s before making request")
+            logger.warning(
+                "Page has consent modal. Waiting %ss before making request",
+                wait_time
+            )
             time.sleep(wait_time)
             self._consent(bs4_obj)
 
@@ -234,7 +243,7 @@ class GoogleCrawler(crawler_base.Crawler):
             search_res = bs4_obj.find_all(
                 f"{HTML_ELEMENT}", attrs={"class": f"{css_class}"})
             if search_res:
-                print(f"Found matching css class: {css_class}")
+                logger.info("Found matching CSS class: %s", css_class)
                 break
 
         if not search_res:
@@ -261,19 +270,19 @@ class GoogleCrawler(crawler_base.Crawler):
         """
         # construct url
         full_url = self.construct_query(query, page)
-        print(f"constructed url: {full_url}")
+        logger.info("calling: %s", full_url)
         # make request
         resp = self._request("get", full_url, headers=self.headers)
         if self.consent_url in resp.url:
-            print("WARNING: redirected to consent page.")
+            logger.warning("redirected to consent page.")
         # parse page
         out_arr = None
         try:
             bs4_obj = self._create_bs4_obj(resp.text)
             out_arr = self.parse_page(bs4_obj)
 
-        except (errors.ConsentParseError, errors.ParseError) as e:
-            print(f"ERROR: could not parse page, dumping html: {e}")
+        except (errors.ConsentParseError, errors.ParseError) as err:
+            logger.error("could not parse page, dumping HTML: %s", err)
             errors.dump_html(self.parsed_html, "google")
 
         return out_arr
