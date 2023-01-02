@@ -1,0 +1,124 @@
+{
+    "IDLE Programming python": [
+        {
+            "url": "https://www.dummies.com/article/technology/programming-web-design/python/how-to-start-idle-in-python-148365/",
+            "title": "How to Start IDLE in Python  - dummies",
+            "author": "www.dummies.com",
+            "type": "A",
+            "source": "www.dummies.com"
+        },
+        {
+            "url": "https://realpython.com/python-idle/",
+            "title": "Getting Started With Python IDLE \u2013 Real Python",
+            "author": "realpython.com",
+            "type": "A",
+            "source": "realpython.com"
+        },
+        {
+            "url": "https://www.youtube.com/watch?v=z7FB2Td2VXc",
+            "title": "#4 Python Tutorial for Beginners | What is IDLE in Python And How to Run Python Program using IDLE",
+            "author": "Automate with Rakesh",
+            "type": "V",
+            "source": "https://www.youtube.com"
+        },
+        {
+            "url": "https://www.youtube.com/watch?v=riL_xn6BKD8",
+            "title": "Introduction to Python IDLE | IDLE Installation and Configuration Tutorial |  Edureka",
+            "author": "edureka!",
+            "type": "V",
+            "source": "https://www.youtube.com"
+        },
+        {
+            "url": "https://sites.pitt.edu/~naraehan/python3/getting_started_win_first_try.html",
+            "title": "Python 3 Notes: Trying out Python IDLE for the First Time",
+            "author": "sites.pitt.edu",
+            "type": "A",
+            "source": "sites.pitt.edu"
+        },
+        {
+            "url": "https://www.youtube.com/watch?v=qs7kruttoVY",
+            "title": "Python Tutorial 2021 - Lesson 5: IDLE",
+            "author": "Learn with video tutorials",
+            "type": "V",
+            "source": "https://www.youtube.com"
+        },
+        {
+            "url": "https://www.programiz.com/python-programming/online-compiler/",
+            "title": "Online Python Compiler (Interpreter)",
+            "author": "www.programiz.com",
+            "type": "A",
+            "source": "www.programiz.com"
+        },
+        {
+            "url": "https://sites.physics.utoronto.ca/comp-physics/manual/tutorial-part-1-first-steps-with-idle-and-python",
+            "title": "Tutorial, Part 1: First Steps with IDLE and Python \u2014 Computational Physics at the University of Toronto",
+            "author": "sites.physics.utoronto.ca",
+            "type": "A",
+            "source": "sites.physics.utoronto.ca"
+        },
+        {
+            "url": "https://www.tutorialsteacher.com/python/python-idle",
+            "title": " Python IDLE - Integrated Development and Learning Environment",
+            "author": "www.tutorialsteacher.com",
+            "type": "A",
+            "source": "www.tutorialsteacher.com"
+        },
+        {
+            "url": "https://python101.pythonlibrary.org/chapter1_idle.html",
+            "title": "Chapter 1 - IDLE Programming \u2014 Python 101 1.0 documentation",
+            "author": "python101.pythonlibrary.org",
+            "type": "A",
+            "source": "python101.pythonlibrary.org"
+        },
+        {
+            "url": "https://ladderpython.com/lesson/installing-python-idle/",
+            "title": "Installing Python IDLE | Downloading Python IDLE and Installation - Computer Science Tutorial",
+            "author": "ladderpython.com",
+            "type": "A",
+            "source": "ladderpython.com"
+        },
+        {
+            "url": "https://en.wikipedia.org/wiki/IDLE",
+            "title": "IDLE - Wikipedia",
+            "author": "en.wikipedia.org",
+            "type": "A",
+            "source": "en.wikipedia.org"
+        },
+        {
+            "url": "https://codeberryschool.com/blog/en/program-in-python-idle/",
+            "title": "How to run a program in Python IDLE \u00e2\u0080\u0093 with examples - CodeBerry",
+            "author": "codeberryschool.com",
+            "type": "A",
+            "source": "codeberryschool.com"
+        },
+        {
+            "url": "https://docs.python.org/3/library/idle.html",
+            "title": "IDLE \u2014 Python 3.11.1 documentation",
+            "author": "docs.python.org",
+            "type": "A",
+            "source": "docs.python.org"
+        },
+        {
+            "url": "https://www.python.org/downloads/",
+            "title": "Download Python | Python.org",
+            "author": "www.python.org",
+            "type": "A",
+            "source": "www.python.org"
+        },
+        {},
+        {
+            "url": "https://www.python.org/about/gettingstarted/",
+            "title": "Python For Beginners | Python.org",
+            "author": "www.python.org",
+            "type": "A",
+            "source": "www.python.org"
+        },
+        {
+            "url": "https://www.youtube.com/watch?v=WIlQukiXs-E",
+            "title": "What is Python IDLE and How to Use the IDLE Shell",
+            "author": "Real Python",
+            "type": "V",
+            "source": "https://www.youtube.com"
+        }
+    ]
+}

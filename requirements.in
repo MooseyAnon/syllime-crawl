@@ -1,5 +1,6 @@
 beautifulsoup4
 bs4
+freezegun
 isort
 lxml
 pdfminer.six

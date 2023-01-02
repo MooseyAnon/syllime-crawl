@@ -1,0 +1,124 @@
+// source of mit sc course: http: http://catalog.mit.edu/degree-charts/computer-science-engineering-course-6-3/
+{
+    "course": "computer-science",
+    "levels": [
+        {
+            "level": "university-year-1",
+            "modules": [
+                {
+                    "module": "python-101",
+                    "topics" : [
+                        "IDLE Programming python",
+                        "All About Strings python",
+                        "Lists, Tuples and Dictionaries python",
+                        "Conditional Statements python",
+                        "Loops python",
+                        "Python Comprehensions",
+                        "Exception Handling python",
+                        "Working with Files python",
+                        "Importing python",
+                        "Functions python",
+                        "Classes python"
+                   ]
+                },
+                {
+                    "module": "Introduction To Computer Science And Programming",
+                    "topics": [
+                        "Core Elements of a computer Program",
+                        "Problem Solving computer science",
+                        "Machine Interpretation of a Program",
+                        "Objects in Python",
+                        "Recursion programming",
+                        "Debugging programming",
+                        "Efficiency and Order of Growth programming",
+                        "Memory and Search Methods programming",
+                        "Hashing and Classes",
+                        "OOP and Inheritance",
+                        "Introduction to Simulation and Random Walks",
+                        "Basic Probability and Plotting Data programming",
+                        "Sampling and Monte Carlo Simulation",
+                        "Statistical Thinking",
+                        "Using Randomness to Solve Non-random Problems",
+                        "Curve Fitting",
+                        "Optimization Problems and Algorithms",
+                        "Using Graphs to Model Problems programming",
+                        "Dynamic Programming",
+                        "Avoiding Statistical Fallacies",
+                        "Queuing Network Models",
+                        "What Do Computer Scientists Do?"
+                    ]
+                },
+                {
+                    "module": "Mathematics of Computer Science",
+                    "topics":[
+                        "Introduction and proofs",
+                        "Induction proofs",
+                        "Strong induction",
+                        "Number theory",
+                        "Number theory",
+                        "Graph theory and coloring",
+                        "Matching problems",
+                        "minimum spanning trees",
+                        "Communication networks",
+                        "Relations, partial orders, and scheduling",
+                        "Sums computer science",
+                        "Sums and asymptotics",
+                        "Divide and conquer recurrences",
+                        "Linear recurrences",
+                        "Counting rules computer science",
+                        "Probability introduction computer science",
+                        "Conditional probability",
+                        "Independence probability",
+                        "Random variables probability",
+                        "Large deviations",
+                        "Random walks"
+                    ]
+                },
+                {
+                    "module": "introduction to algorithms",
+                    "topics": [
+                        "Algorithmic thinking",
+                        "peak finding",
+                        "Models of computation",
+                        "document distance",
+                        "Insertion sort",
+                        "merge sort",
+                        "Heaps",
+                        "heap sort",
+                        "Binary search trees",
+                        "BST sort",
+                        "AVL trees",
+                        "Counting sort",
+                        "radix sort",
+                        "lower bounds for sorting and searching",
+                        "Hashing with chaining",
+                        "Table doubling",
+                        "Karp-Rabin",
+                        "Open addressing hash tables",
+                        "cryptographic hashing",
+                        "Integer arithmetic",
+                        "Karatsuba multiplication",
+                        "Square roots Newton’s method programming",
+                        "Breadth-first search (BFS)",
+                        "Depth-first search (DFS)",
+                        "topological sorting",
+                        "Single-source shortest paths problem",
+                        "Dijkstra",
+                        "Bellman-Ford",
+                        "Speeding up Dijkstra",
+                        "Memoization",
+                        "bottom up dynamic programming",
+                        "text justification dynamic programming",
+                        "String subproblems",
+                        "psuedopolynomial time",
+                        "parenthesization dynamic programming",
+                        "edit distance",
+                        "knapsack problem",
+                        "Computational complexity",
+                        "Algorithms research topics"
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,6 +1,9 @@
+import freezegun
 import pytest
+import requests
 
 from sylli_crawl import google_crawler
+from sylli_crawl.utils import errors, helpers
 
 
 def test_search_engine_results_found(mocker, response):
@@ -68,7 +71,7 @@ def test_modal_page(mocker, response):
         return_value=response("test-google-modal.html", 204)
     )
     g_crawler = google_crawler.GoogleCrawler()
-    actual = g_crawler.fetch("hello world")
+    actual = g_crawler.fetch("some-random-query")
     assert actual == [
         "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program",
         "https://helloworld.raspberrypi.org/",
@@ -109,3 +112,43 @@ def test_find_video(mock_request):
         "https://www.youtube.com/watch?v=a25_gGnmJAw"
     ]
     assert g_crawler.parse_video(bs4_obj) == expected
+
+
+def test_bad_request(mocker, caplog):
+    mocker.patch(
+        "sylli_crawl.google_crawler.GoogleCrawler._request",
+        side_effect=requests.exceptions.RequestException("something failed")
+    )
+    g_crawler = google_crawler.GoogleCrawler()
+    actual = g_crawler.fetch("some-random-query")
+    # ensure the crawler returns something and doesnt crash
+    assert actual == []
+
+    # check log got called
+    errors = 0
+    for cap in caplog.records:
+        if cap.levelname == "ERROR":
+            errors += 1
+            # ensure that the error bubbles to the crawler
+            assert cap.message == "something failed"
+
+    assert errors > 0
+
+
+@freezegun.freeze_time("2023-01-01 01:00:00")
+def test_html_dump(mocker, tmpdir, response):
+    mocker.patch(
+        "sylli_crawl.google_crawler.GoogleCrawler._request",
+        return_value=response("test-html-crawler.html", 200)
+    )
+    mocker.patch.object(helpers, "ERROR_DIR", tmpdir)
+    g_crawler = google_crawler.GoogleCrawler()
+    actual = g_crawler.fetch("some-random-query")
+    # ensure we still return something and the program hasnt crashed
+    assert actual == []
+
+    # check that the html has been correctly dumped
+    assert len(tmpdir.listdir()) == 1
+    expected_filename = "google-01-01-2023-01:00:00.html"
+    file = tmpdir.listdir()[0]
+    assert file.basename == expected_filename

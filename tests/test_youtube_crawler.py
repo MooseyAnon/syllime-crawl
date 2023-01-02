@@ -40,7 +40,7 @@ def test_channel_name_found(mocker, mock_request, driver):
         return_value=None
     )
     mocker.patch(
-        "sylli_crawl.js_crawler.get_driver"
+        "sylli_crawl.utils.driver_manager.get_driver"
     ).return_value.__enter__.return_value = MockDriver(
         page_source=mock_request("test-youtube-cp.html"))
 
@@ -67,7 +67,7 @@ def test_video_title_found(mocker, mock_request):
         return_value=None
     )
     mocker.patch(
-        "sylli_crawl.js_crawler.get_driver"
+        "sylli_crawl.utils.driver_manager.get_driver"
     ).return_value.__enter__.return_value = MockDriver(
         page_source=mock_request("test-youtube-cp.html"))
 
@@ -94,7 +94,7 @@ def test_full_fetch(mocker, mock_request):
         return_value=None
     )
     mocker.patch(
-        "sylli_crawl.js_crawler.get_driver"
+        "sylli_crawl.utils.driver_manager.get_driver"
     ).return_value.__enter__.return_value = MockDriver(
         page_source=mock_request("test-youtube-cp.html"))
 
