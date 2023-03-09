@@ -157,7 +157,7 @@ def firefox_headers():
         'Connection': 'keep-alive',
         'Viewport-Width': '1920',
         'Cache-Control': 'private, max-age=0, no-cache',
-        'Content-Type': 'text/html; charset=utf-8'
+        'Content-Type': 'text/html; charset=utf-8',
     }
 
 
