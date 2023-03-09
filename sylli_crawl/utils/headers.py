@@ -149,7 +149,7 @@ def firefox_headers():
     :rtype: dict[str: str]
     """
     return {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:104.0) Gecko/20100101 Firefox/104.0',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:108.0) Gecko/20100101 Firefox/108.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
         'Accept-Encoding': 'gzip, deflate',
