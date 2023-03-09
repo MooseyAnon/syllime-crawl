@@ -134,6 +134,8 @@ class YoutubeCrawler(crawler_base.Crawler):
 
             # will only save cookies if not already saved
             self.save_cookies(driver)
+                    logger.error("unable to return source from driver")
+                    raise errors.SourceError
 
         return page_source
 
