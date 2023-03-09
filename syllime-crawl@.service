@@ -1,0 +1,18 @@
+# SylliMe Crawler Service
+
+[Unit]
+Description=SylliMe Crawler Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/local/syllime-crawl
+ExecStart=/usr/local/syllime-crawl/venv/bin/python -m crawl \
+    --directory %i
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+User=syllime-user
+EnvironmentFile=/etc/sysconfig/syllime/env
+
+[Install]
+WantedBy=multi-user.target

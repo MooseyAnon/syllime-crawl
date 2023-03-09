@@ -1,0 +1,6 @@
+RESOURCES_OUT_FOLDER=/var/www/syllime/files/resources
+QUERY_FOLDER=/var/www/syllime/files/querys
+SEARCH_RESULT_OUT_FOLDER=/var/www/syllime/files/search-results
+ERROR_DIR=/var/www/syllime/files/html-error-dumps
+ERROR_URL_FILE=/var/www/syllime/files/error-urls.json
+COOKIE_PATH=/var/www/syllime/files/cookies
