@@ -1,21 +1,16 @@
 # pylint: disable=abstract-method, arguments-differ, no-self-use
 # pylint: disable=arguments-renamed
 """Crawl a JavaScript sites"""
-from contextlib import contextmanager
 import logging
-import logging.config
-from pathlib import Path
 import pickle
 import time
 
 from bs4 import BeautifulSoup
-from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import (
-    NoSuchElementException, WebDriverException)
 
 from sylli_crawl import crawler_base
-
+from sylli_crawl.utils import driver_manager, errors, helpers
 
 # xpath to the "Reject all" button on youtube consent form
 REJECT_ALL_XPATH = '//ytd-button-renderer[contains(., "Reject all")]'
@@ -28,19 +23,15 @@ YT_CHANNEL_CLASS_NAMES = "style-scope ytd-channel-name"
 VIDEO_TITLE_ELEMENT = "h1"
 VIDEO_TITLE_CLASS_NAMES = "title style-scope ytd-video-primary-info-renderer"
 
-# browser height and width
-WIDTH = "1920"
-HEIGHT = "1080"
-
-# set the logging config file
-logging.config.fileConfig("logging.ini")
-logger = logging.getLogger("js-crawler")
+logger = logging.getLogger(__name__)
 
 
 class KhanAcademyCralwer(crawler_base.Crawler):
     """Khan Academy Crawler."""
-    def __init__(self):
+    def __init__(self, headless=True):
         super().__init__()
+        # useful for debugging
+        self.headless = headless
 
     def _request(self, full_url, sleep_secs=10):
         """Request a given URL.
@@ -51,10 +42,18 @@ class KhanAcademyCralwer(crawler_base.Crawler):
         :rtype: bs4.BeautifulSoup
         """
         page_source = None
-        with get_driver() as driver:
-            driver.get(full_url)
-            time.sleep(sleep_secs)
-            page_source = driver.page_source
+        # if there are issue with the driver (it has been seen that the
+        # process fails randomly on occasion) it will raise a RuntimeError
+        # as the generator will not yield. We need to catch this, to make sure
+        # the program does not crash
+        try:
+            with driver_manager.get_driver(headless=self.headless) as driver:
+                driver.get(full_url)
+                time.sleep(sleep_secs)
+                page_source = driver.page_source
+        except RuntimeError as e:
+            logger.error(e)
+
         return page_source
 
     def parse_page(self, raw_html):
@@ -68,19 +67,32 @@ class KhanAcademyCralwer(crawler_base.Crawler):
         title = bs4_obj.find('title').text
         return title
 
-    def fetch(self, url):
+    def fetch(self, url, dry_run=False):
         """Fetch a given URL.
 
         :param str url: the url to fetch
+        :param bool dry_run: dry run flag
         :return: metadata for url
         :rtype: dict[str: str]
         """
+        metadata = {}
         self._url_parse(url)
         # construct new url, we want to make sure we get rid of the
         # modal query param; if present
         full_url = f"{self.scheme}://{self.netloc}{self.path}"
-        print(full_url)
+        logger.info("fetching %s", full_url)
+
+        # we dont need to go any further
+        if dry_run:
+            return metadata
+
         raw_html = self._request(full_url)
+        # occasionally the driver does not return any source code.
+        # this can cause problems with parsing and crash the program
+        if not raw_html:
+            logger.error("Driver did not return any source code")
+            helpers.write_error_urls(full_url)
+            return metadata
         title = self.parse_page(raw_html)
 
         type_ = "V"
@@ -91,13 +103,13 @@ class KhanAcademyCralwer(crawler_base.Crawler):
                 type_ = content_type[1].upper()
                 break
 
-        return {
-            "url": full_url,
-            "title": title,
-            "author": "Khan Academy",
-            "type": type_,
-            "source": f"{self.scheme}://{self.netloc}",
-        }
+        metadata["url"] = full_url
+        metadata["title"] = title
+        metadata["author"] = "Khan Academy"
+        metadata["type"] = type_
+        metadata["source"] = f"{self.scheme}://{self.netloc}"
+
+        return metadata
 
 
 class YoutubeCrawler(crawler_base.Crawler):
@@ -107,11 +119,13 @@ class YoutubeCrawler(crawler_base.Crawler):
     # https://dev.to/hardiksondagar/reuse-sessions-using-cookies-in-python-selenium-12ca
     # https://stackoverflow.com/questions/15058462/how-to-save-and-load-cookies-using-python-selenium-webdriver
     # https://medium.com/geekculture/how-to-share-cookies-between-selenium-and-requests-in-python-d36c3c8768b
-    def __init__(self):
+    def __init__(self, headless=True):
         super().__init__()
         self.consent_passed = False
-        self.cookie_file = Path("cookies.pkl")
+        self.cookie_file = helpers.COOKIE_PATH / "youtube-cookie.pkl"
         self.cookie_file_exists = False
+        # useful for debugging
+        self.headless = headless
 
     def _request(self, full_url, sleep_secs=10, check_consent=False):
         """Request a given URL.
@@ -123,19 +137,41 @@ class YoutubeCrawler(crawler_base.Crawler):
         :rtype: bs4.BeautifulSoup
         """
         page_source = None
-        with get_driver() as driver:
-            driver.get(full_url)
-            # optimistically try load cookies
-            self.load_cookies(driver)
-            time.sleep(sleep_secs)
-            page_source = self.parse_page(driver.page_source)
-            if not check_consent and self.has_modal(page_source):
-                self.consent(driver)
+        # if there are issue with the driver (it has been seen that the
+        # process fails randomly on occasion) it will raise a RuntimeError
+        # as the generator will not yield. We need to catch this, to make sure
+        # the program does not crash
+        try:
+            with driver_manager.get_driver(headless=self.headless) as driver:
+                driver.get(full_url)
 
-            # will only save cookies if not already saved
-            self.save_cookies(driver)
+                # optimistically try load cookies
+                self.load_cookies(driver)
+                time.sleep(sleep_secs)
+
+                # check if there is source code from driver
+                # this can cause unexpected errors
+                source_from_driver = driver.page_source
+                if source_from_driver:
+
+                    # we need to parse the page in here so we can check for
+                    # as consent modal on the page and then reuse the driver
+                    # to get past it and save the cookies
+                    page_source = self.parse_page(driver.page_source)
+
+                    if not check_consent and self.has_modal(page_source):
+                        logger.warning("Page may have a consent form")
+                        self.consent(driver)
+
+                    # will only save cookies if not already saved
+                    self.save_cookies(driver)
+
+                else:
                     logger.error("unable to return source from driver")
                     raise errors.SourceError
+
+        except RuntimeError as e:
+            logger.error(e)
 
         return page_source
 
@@ -198,10 +234,15 @@ class YoutubeCrawler(crawler_base.Crawler):
         :returns: the channel name
         :rtype: str
         """
-        channel_name = bs4_obj.find(
+        container = bs4_obj.find(
             CHANNEL_NAME_TAG, attrs={"class": YT_CHANNEL_CLASS_NAMES}
         )
-        return channel_name.select_one("a").text
+        channel_name = container.select_one("a").text
+        logger.info(
+            "found youtube channel name: %s",
+            channel_name
+        )
+        return channel_name
 
     def _video_title(self, bs4_obj):
         """Get title of video.
@@ -213,7 +254,12 @@ class YoutubeCrawler(crawler_base.Crawler):
         container = bs4_obj.find(
             VIDEO_TITLE_ELEMENT, attrs={"class": VIDEO_TITLE_CLASS_NAMES}
         )
-        return container.select_one("yt-formatted-string").text
+        video_title = container.select_one("yt-formatted-string").text
+        logger.info(
+            "found youtube video title: %s",
+            video_title
+        )
+        return video_title
 
     def parse_page(self, raw_html):
         """Parse raw HTML.
@@ -225,24 +271,38 @@ class YoutubeCrawler(crawler_base.Crawler):
         bs4_obj = BeautifulSoup(raw_html, 'lxml')
         return bs4_obj
 
-    def fetch(self, url):
+    def fetch(self, url, dry_run=False):
         """Fetch a given URL.
 
         :param str url: the url to fetch
+        :param bool dry_run: dry run flag
         :return: metadata for url
         :rtype: dict[str: str]
         """
+        metadata = {}
         self._url_parse(url)
-        raw_html = self._request(url, check_consent=self.consent_passed)
-        parsed_html = raw_html
-        # parsed_html = self.parse_page(raw_html)
-        return {
-            "url": url,
-            "title": self._video_title(parsed_html),
-            "author": self._channel_name(parsed_html),
-            "type": "V",
-            "source": f"{self.scheme}://{self.netloc}",
-        }
+        logger.info("fetching %s", url)
+
+        # we dont need to go any further
+        if dry_run:
+            return metadata
+
+        try:
+            parsed_html = self._request(
+                url,
+                check_consent=self.consent_passed
+            )
+        except (errors.SourceError, RuntimeError):
+            helpers.write_error_urls(url)
+
+        if parsed_html:
+            metadata["url"] = url
+            metadata["title"] = self._video_title(parsed_html)
+            metadata["author"] = self._channel_name(parsed_html)
+            metadata["type"] = "V"
+            metadata["source"] = f"{self.scheme}://{self.netloc}"
+
+        return metadata
 
 
 class JavascriptCrawler():
@@ -250,19 +310,21 @@ class JavascriptCrawler():
     def __init__(self):
         self.khan_crawler = KhanAcademyCralwer()
         self.yt_crawler = YoutubeCrawler()
+        logger.info("initiated youtube and khanacademy crawlers")
 
-    def fetch(self, url):
+    def fetch(self, url, dry_run=False):
         """Fetch a JS page.
 
         :param str url: the url to fetch
+        :param bool dry_run: dry run flag
         :return: metadata for url
         :rtype: dict[str: str]
         """
         metadata = {}
         if "khanacademy" in url:
-            metadata = self.khan_crawler.fetch(url)
+            metadata = self.khan_crawler.fetch(url, dry_run=dry_run)
 
         if "youtube" in url:
-            metadata = self.yt_crawler.fetch(url)
+            metadata = self.yt_crawler.fetch(url, dry_run=dry_run)
 
         return metadata

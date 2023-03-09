@@ -1,13 +1,13 @@
 # pylint: disable=arguments-differ, no-self-use, consider-using-f-string
 """Crawler for Bing search engine."""
 import logging
-import logging.config
 import time
 
 from bs4 import BeautifulSoup
+import requests
 
 from sylli_crawl import crawler_base
-from sylli_crawl.utils import errors, headers
+from sylli_crawl.utils import errors, headers, helpers
 
 # currently working css class to search for
 LAST_WORKING_CSS_CLASS = "b_algo"
@@ -26,9 +26,7 @@ HTML_ELEMENT = "li"
 # the element that contains the search results
 SER_CONTAINER_OBJ = "ol"
 
-# set the logging config file
-logging.config.fileConfig("logging.ini")
-logger = logging.getLogger("bing-crawler")
+logger = logging.getLogger(__name__)
 
 
 class BingCrawler(crawler_base.Crawler):
@@ -37,6 +35,7 @@ class BingCrawler(crawler_base.Crawler):
         super().__init__("https://www.bing.com/search")
         self.headers = self.set_headers()
         self.parsed_html = None
+        self.dry_run = None
 
     def _create_bs4_obj(self, raw_html):
         """Create bs4 object and bind to class property.
@@ -187,23 +186,37 @@ class BingCrawler(crawler_base.Crawler):
 
         return out_arr
 
-    def fetch(self, query, page=1):
+    def fetch(self, query, page=1, dry_run=False):
         """Fetch a query.
 
         :param str query: the query to search for
         :param int page: the results page of the query
+        :param bool dry_run: dry run flag
         :return: an array of links from Bings SERP
         :rtype: list[str]
         """
-        logger.info("constructing url...")
+        if self.dry_run is None:
+            logger.info("setting dry run to %s", dry_run)
+            self.dry_run = dry_run
+
         # construct url
         full_url = self.construct_query(query, page)
         logger.info("calling: %s", full_url)
-        out = self.parse_with_retry(full_url)
+
+        # we dont need to go any further
+        if dry_run:
+            return []
+
+        try:
+            out = self.parse_with_retry(full_url)
+
+        except requests.exceptions.RequestException as e:
+            logger.error(e)
+
         if not out:
             logger.error(
                 "No search results matching query, dumping HTML. "
                 "Query: %s", query
             )
-            errors.dump_html(self.parsed_html, "bing")
+            helpers.dump_pretty_html(self.parsed_html, "bing")
         return out

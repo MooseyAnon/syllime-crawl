@@ -67,7 +67,7 @@ class Crawler:
         resp = self.session.request(
             method,
             full_url,
-            timeout=1,
+            timeout=5,
             **kwargs,
         )
         resp.raise_for_status()
