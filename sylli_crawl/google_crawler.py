@@ -1,14 +1,14 @@
 # pylint: disable=arguments-differ, no-self-use, consider-using-f-string
 """Crawler for Google search engine."""
 import logging
-import logging.config
 import re
 import time
 
 from bs4 import BeautifulSoup
+import requests
 
 from sylli_crawl import crawler_base
-from sylli_crawl.utils import errors, headers
+from sylli_crawl.utils import errors, headers, helpers
 
 # variable name to look for in script tag in consent modal
 CONSENT_VAR_NAME = "rAU"
@@ -28,9 +28,8 @@ HTML_ELEMENT = "div"
 # tag for video area on SREP
 VIDEO_ELEMENT_TAG = "video-voyager"
 
-# set the logging config file
-logging.config.fileConfig("logging.ini")
-logger = logging.getLogger("google-crawler")
+logger = logging.getLogger(__name__)
+# logger.info("goog logger set")
 
 
 class GoogleCrawler(crawler_base.Crawler):
@@ -40,6 +39,7 @@ class GoogleCrawler(crawler_base.Crawler):
         self.headers = self.set_headers()
         self.parsed_html = None
         self.consent_url = "https://consent.google.com/save"
+        self.dry_run = None
 
     def set_headers(self):
         """Set headers for crawler."""
@@ -181,7 +181,14 @@ class GoogleCrawler(crawler_base.Crawler):
         url = f"{self.consent_url}?{self._build_consent_url(m)}"
         # send post request to pass consent page
         logger.info("consent url: %s", url)
-        resp = self._request("post", url, data=None, headers=self.headers)
+        resp = None
+        try:
+            resp = self._request("post", url, data=None, headers=self.headers)
+
+        # we can carry on after this as the ConsentParseError will handle it
+        except requests.exceptions.RequestException as e:
+            logger.error(e)
+
         # this is a no content request so should return 204
         if not resp or resp.status_code not in range(200, 211):
             raise errors.ConsentParseError("Failed to pass consent")
@@ -260,29 +267,47 @@ class GoogleCrawler(crawler_base.Crawler):
         out_arr += self.parse_video(bs4_obj)
         return out_arr
 
-    def fetch(self, query, page=1):
+    def fetch(self, query, page=1, dry_run=False):
         """Fetch a query.
 
         :param str query: the query to search for
         :param int page: the results page of the query
+        :param bool dry_run: dry run flag
         :return: an array of links from Bings SERP
         :rtype: list[str]
         """
+        out_arr = []
+        resp = None
+
+        if self.dry_run is None:
+            logger.info("setting dry run to %s", dry_run)
+            self.dry_run = dry_run
+
         # construct url
         full_url = self.construct_query(query, page)
         logger.info("calling: %s", full_url)
-        # make request
-        resp = self._request("get", full_url, headers=self.headers)
-        if self.consent_url in resp.url:
-            logger.warning("redirected to consent page.")
-        # parse page
-        out_arr = None
-        try:
-            bs4_obj = self._create_bs4_obj(resp.text)
-            out_arr = self.parse_page(bs4_obj)
 
-        except (errors.ConsentParseError, errors.ParseError) as err:
-            logger.error("could not parse page, dumping HTML: %s", err)
-            errors.dump_html(self.parsed_html, "google")
+        # we dont need to go any further
+        if self.dry_run:
+            return []
+
+        # make request
+        try:
+            resp = self._request("get", full_url, headers=self.headers)
+
+        except requests.exceptions.RequestException as e:
+            logger.error(e)
+
+        if resp:
+            if self.consent_url in resp.url:
+                logger.warning("redirected to consent page.")
+
+            try:
+                bs4_obj = self._create_bs4_obj(resp.text)
+                out_arr = self.parse_page(bs4_obj)
+
+            except (errors.ConsentParseError, errors.ParseError) as err:
+                logger.error("could not parse page, dumping HTML: %s", err)
+                helpers.dump_pretty_html(self.parsed_html, "google")
 
         return out_arr
