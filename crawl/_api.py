@@ -192,7 +192,7 @@ def process(course_data, dry_run=False):
                 meta_data = (
                     f"{course_data['course']}/{level['level']}/"
                     f"{module['module']}"
-                ).strip()
+                ).strip().replace(" ", "-")
                 yield construct_search_result_object(
                     topic.strip(), list(results), meta_data)
 
