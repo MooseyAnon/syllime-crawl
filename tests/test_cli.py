@@ -14,13 +14,13 @@ FAKE_SET = {
 
 
 mock_curriculum_data = {
-    "course": "computer-science",
+    "course": "computer science",
     "levels": [
         {
-            "level": "university-year-1",
+            "level": "university year 1",
             "modules": [
                 {
-                    "module": "python-101",
+                    "module": "python 101",
                     "topics" : [
                         "IDLE Programming python",
                         "All About Strings python"
