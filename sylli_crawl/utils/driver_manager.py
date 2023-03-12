@@ -53,7 +53,7 @@ def get_driver(headless=True):
     try:
         driver = init_driver(
             options=options,
-            executable_path="sylli_crawl/phantomjs/geckodriver",
+            executable_path="sylli_crawl/geckodriver/geckodriver",
         )
         yield driver
 
