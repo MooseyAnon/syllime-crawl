@@ -215,6 +215,33 @@ class YoutubeCrawler(crawler_base.Crawler):
         except NoSuchElementException as e:
             logger.error("Could not find 'Reject All' button: %s", e)
 
+    def has_captcha(self, bs4_obj):
+        """Check if the page has a CAPTCHA challenge.
+
+        We dont know exactly how a CAPTCHA challenge will be presents
+        so this function tries all known CAPTCHA based attrs (from example
+        html page in tests, which is from live data seen while running in
+        prod) in order to maximise the chances of spotting a CAPTCHA
+        challenge.
+
+        This may be added to/changed in future as we get more data from
+        prod.
+
+        :param bs4.beautifulSoup bs4_obj: parsed html
+        :returns: true if page has CAPTCHA
+        :rtype: bool
+        """
+        # in the example html file there is a form object which contains
+        # the CAPTCHA challenge
+        captcha_form = bs4_obj.find_all("form", attrs={"id": "captcha-form"})
+        # this is the div that contains the actual iframe within which the
+        # CAPTCHA challenge sits
+        captcha_div = bs4_obj.find_all("div", attrs={"class": "g-recaptcha"})
+        # the div that contains the human readable text tell you to complete it
+        info_div = bs4_obj.find("div", attrs={"id": "infoDiv"})
+        info_contains = "CAPTCHA" in info_div.text if info_div else False
+        return captcha_form != [] or captcha_div != [] or info_contains
+
     def has_modal(self, bs4_obj):
         """Check if page has modal.
 
@@ -295,7 +322,7 @@ class YoutubeCrawler(crawler_base.Crawler):
         except (errors.SourceError, RuntimeError):
             helpers.write_error_urls(url)
 
-        if parsed_html:
+        if parsed_html and not self.has_captcha(parsed_html):
             metadata["url"] = url
             metadata["title"] = self._video_title(parsed_html)
             metadata["author"] = self._channel_name(parsed_html)
