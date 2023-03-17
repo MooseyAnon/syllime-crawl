@@ -163,3 +163,56 @@ def test_youtube_request_on_remote_machine(mocker, mock_request):
         "source": "https://some-website.com",
     }
     assert actual_out == expected_out
+
+
+@pytest.mark.parametrize("raw_html,expected",
+    [
+        ("test-youtube-captcha.html", True),
+        ("test-youtube-on-debian.html", False)
+    ]
+)
+def test_has_captch(mock_request, raw_html, expected):
+
+    page_source = mock_request(raw_html)
+    js = js_crawler.YoutubeCrawler()
+    parsed = js.parse_page(page_source)
+    assert js.has_captcha(parsed) == expected
+
+
+@pytest.mark.parametrize("raw_html,expected",
+    [
+        ("test-youtube-captcha.html", {}),
+        ("test-youtube-on-debian.html",
+            {
+                "url": "https://some-website.com/some-path",
+                "title": "RealestK -  SWM (Official Music video)",
+                "author": "RealestK",
+                "type": "V",
+                "source": "https://some-website.com",
+            }
+        )
+    ]
+)
+def test_captcha_from_fetch(mocker, mock_request, raw_html, expected):
+    mocker.patch("time.sleep", return_value=None)
+    mocker.patch(
+        "sylli_crawl.js_crawler.YoutubeCrawler.consent",
+        return_value=None
+    )
+    mocker.patch(
+        "sylli_crawl.js_crawler.YoutubeCrawler.save_cookies",
+        return_value=None
+    )
+    mocker.patch(
+        "sylli_crawl.js_crawler.YoutubeCrawler.load_cookies",
+        return_value=None
+    )
+    mocker.patch(
+        "sylli_crawl.utils.driver_manager.get_driver"
+    ).return_value.__enter__.return_value = MockDriver(
+        page_source=mock_request(raw_html))
+
+    url = "https://some-website.com/some-path"
+    js = js_crawler.YoutubeCrawler()
+    actual_out = js.fetch(url)
+    assert actual_out == expected
