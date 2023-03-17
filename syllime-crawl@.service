@@ -9,7 +9,7 @@ Type=simple
 WorkingDirectory=/usr/local/syllime-crawl
 ExecStart=/usr/local/syllime-crawl/venv/bin/python -m crawl %i
 ExecReload=/bin/kill -HUP $MAINPID
-Restart=always
+Restart=no
 User=syllime-user
 EnvironmentFile=/etc/sysconfig/syllime/env
 
