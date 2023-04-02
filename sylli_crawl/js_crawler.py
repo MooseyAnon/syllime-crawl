@@ -118,6 +118,8 @@ class YoutubeCrawler(crawler_base.Crawler):
         self.consent_passed = False
         self.cookie_file = helpers.COOKIE_PATH / "youtube-cookie.pkl"
         self.cookie_file_exists = False
+        # make parsed html (bs4 object) accessible class wide
+        self.parsed_html = None
         # useful for debugging
         self.headless = headless
 
@@ -130,7 +132,6 @@ class YoutubeCrawler(crawler_base.Crawler):
         :returns: parse page source
         :rtype: bs4.BeautifulSoup
         """
-        page_source = None
         with driver_manager.get_driver(headless=self.headless) as driver:
             driver.get(full_url)
 
@@ -140,25 +141,23 @@ class YoutubeCrawler(crawler_base.Crawler):
 
             # check if there is source code from driver
             # this can cause unexpected errors
-            if driver.page_source:
-
-                # we need to parse the page in here so we can check for
-                # as consent modal on the page and then reuse the driver
-                # to get past it and save the cookies
-                page_source = self.parse_page(driver.page_source)
-
-                if not check_consent and self.has_modal(page_source):
-                    logger.warning("Page may have a consent form")
-                    self.consent(driver)
-
-                # will only save cookies if not already saved
-                self.save_cookies(driver)
-
-            else:
+            if not driver.page_source:
                 logger.error("unable to return source from driver")
                 raise errors.SourceError
 
-        return page_source
+            # we need to parse the page in here so we can check for
+            # as consent modal on the page and then reuse the driver
+            # to get past it and save the cookies
+            self.parsed_html = self.parse_page(driver.page_source)
+
+            if not check_consent and self.has_modal(self.parsed_html):
+                logger.warning("Page may have a consent form")
+                self.consent(driver)
+
+            # will only save cookies if not already saved
+            self.save_cookies(driver)
+
+        return self.parsed_html
 
     def save_cookies(self, driver):
         """Pickle and save browser cookies.
@@ -300,17 +299,18 @@ class YoutubeCrawler(crawler_base.Crawler):
             return metadata
 
         try:
-            parsed_html = self._request(
+            self.parsed_html = self._request(
                 url,
                 check_consent=self.consent_passed
             )
         except (errors.SourceError, WebDriverException):
             helpers.write_error_urls(url)
+            return metadata
 
-        if parsed_html and not self.has_captcha(parsed_html):
+        if self.parsed_html and not self.has_captcha(self.parsed_html):
             metadata["url"] = url
-            metadata["title"] = self._video_title(parsed_html)
-            metadata["author"] = self._channel_name(parsed_html)
+            metadata["title"] = self._video_title(self.parsed_html)
+            metadata["author"] = self._channel_name(self.parsed_html)
             metadata["type"] = "V"
             metadata["source"] = f"{self.scheme}://{self.netloc}"
 
