@@ -42,14 +42,6 @@ def get_driver(headless=True):
     options.add_argument(f"--height={HEIGHT}")
     # set log level, we want to minimise noise
     options.add_argument("--log-level=3")
-    # minimise resources required by firefox
-    options.add_argument("--start-maximized")
-    options.add_argument("--disable-infobars")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-application-cache")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-dev-shm-usage")
     try:
         driver = init_driver(
             options=options,
