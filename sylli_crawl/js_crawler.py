@@ -140,8 +140,7 @@ class YoutubeCrawler(crawler_base.Crawler):
 
             # check if there is source code from driver
             # this can cause unexpected errors
-            page_source = self.parse_page(driver.page_source)
-            if page_source:
+            if driver.page_source:
 
                 # we need to parse the page in here so we can check for
                 # as consent modal on the page and then reuse the driver
