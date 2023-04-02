@@ -59,6 +59,7 @@ def get_driver(headless=True):
 
     except WebDriverException as e:
         logger.error("Webdriver Exception %s", e)
+        raise e
 
     finally:
         logger.info("Attempting to closing driver")

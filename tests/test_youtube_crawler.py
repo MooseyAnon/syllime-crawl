@@ -41,7 +41,7 @@ def test_failed_driver(mocker):
         with driver_manager.get_driver() as driver:
             print("we have a driver")
             assert False
-    except RuntimeError:
+    except WebDriverException:
         assert True
 
 
