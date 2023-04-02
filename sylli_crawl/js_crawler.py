@@ -6,7 +6,8 @@ import pickle
 import time
 
 from bs4 import BeautifulSoup
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import (
+    NoSuchElementException, WebDriverException)
 from selenium.webdriver.common.by import By
 
 from sylli_crawl import crawler_base
@@ -42,17 +43,10 @@ class KhanAcademyCralwer(crawler_base.Crawler):
         :rtype: bs4.BeautifulSoup
         """
         page_source = None
-        # if there are issue with the driver (it has been seen that the
-        # process fails randomly on occasion) it will raise a RuntimeError
-        # as the generator will not yield. We need to catch this, to make sure
-        # the program does not crash
-        try:
-            with driver_manager.get_driver(headless=self.headless) as driver:
-                driver.get(full_url)
-                time.sleep(sleep_secs)
-                page_source = driver.page_source
-        except RuntimeError as e:
-            logger.error(e)
+        with driver_manager.get_driver(headless=self.headless) as driver:
+            driver.get(full_url)
+            time.sleep(sleep_secs)
+            page_source = driver.page_source
 
         return page_source
 
@@ -137,41 +131,33 @@ class YoutubeCrawler(crawler_base.Crawler):
         :rtype: bs4.BeautifulSoup
         """
         page_source = None
-        # if there are issue with the driver (it has been seen that the
-        # process fails randomly on occasion) it will raise a RuntimeError
-        # as the generator will not yield. We need to catch this, to make sure
-        # the program does not crash
-        try:
-            with driver_manager.get_driver(headless=self.headless) as driver:
-                driver.get(full_url)
+        with driver_manager.get_driver(headless=self.headless) as driver:
+            driver.get(full_url)
 
-                # optimistically try load cookies
-                self.load_cookies(driver)
-                time.sleep(sleep_secs)
+            # optimistically try load cookies
+            self.load_cookies(driver)
+            time.sleep(sleep_secs)
 
-                # check if there is source code from driver
-                # this can cause unexpected errors
-                source_from_driver = driver.page_source
-                if source_from_driver:
+            # check if there is source code from driver
+            # this can cause unexpected errors
+            page_source = self.parse_page(driver.page_source)
+            if page_source:
 
-                    # we need to parse the page in here so we can check for
-                    # as consent modal on the page and then reuse the driver
-                    # to get past it and save the cookies
-                    page_source = self.parse_page(driver.page_source)
+                # we need to parse the page in here so we can check for
+                # as consent modal on the page and then reuse the driver
+                # to get past it and save the cookies
+                page_source = self.parse_page(driver.page_source)
 
-                    if not check_consent and self.has_modal(page_source):
-                        logger.warning("Page may have a consent form")
-                        self.consent(driver)
+                if not check_consent and self.has_modal(page_source):
+                    logger.warning("Page may have a consent form")
+                    self.consent(driver)
 
-                    # will only save cookies if not already saved
-                    self.save_cookies(driver)
+                # will only save cookies if not already saved
+                self.save_cookies(driver)
 
-                else:
-                    logger.error("unable to return source from driver")
-                    raise errors.SourceError
-
-        except RuntimeError as e:
-            logger.error(e)
+            else:
+                logger.error("unable to return source from driver")
+                raise errors.SourceError
 
         return page_source
 
@@ -319,7 +305,7 @@ class YoutubeCrawler(crawler_base.Crawler):
                 url,
                 check_consent=self.consent_passed
             )
-        except (errors.SourceError, RuntimeError):
+        except (errors.SourceError, WebDriverException):
             helpers.write_error_urls(url)
 
         if parsed_html and not self.has_captcha(parsed_html):
