@@ -6,6 +6,14 @@ import pytest
 from crawl import _api, _globals
 
 
+class MockCrawler:
+    def fetch(self, some_input, dry_run=False):
+        # we dont care about the return of this mock
+        # for testing purposes we just want to know if
+        # its been called or not
+        return {"mock": some_input}
+
+
 FAKE_SET = {
     "https://www.tutorialsteacher.com/python/python-idle",
     "https://www.python.org/downloads/",
@@ -73,6 +81,14 @@ mock_search_res_data = {
                              'search-results': ['https://python101.pythonlibrary.org/chapter1_idle.html',
                                                 'https://www.tutorialsteacher.com/python/python-idle',
                                                 'https://www.python.org/downloads/']}
+}
+
+# for mocking _globals.CRAWLERS
+crawler_mock = {
+    "web": {
+        "html": MockCrawler(),
+        "js": MockCrawler()
+    }
 }
 
 
@@ -281,3 +297,22 @@ def test_end_to_end_dispatch_search(mocker, tmpdir):
         for key in actual_out.keys():
             # counter should be 2 as that was the last index crawled
             assert actual_out[key]["last-discovered"] == 2
+
+@pytest.mark.parametrize("url,expected",
+    [
+        ("some-pdf-site.pdf", {}),
+        ("youtube.com", {"mock": "youtube.com"}),
+        ("instagram.com", {}),
+        ("random-html-site.com/with-path.html",
+            {
+                "mock": "random-html-site.com/with-path.html"
+            }
+        ),
+        ("khanacademy.org", {"mock": "khanacademy.org"}),
+    ]
+)
+def test_fetch_url(mocker, url, expected):
+    mocker.patch.object(_globals, "CRAWLERS", crawler_mock)
+
+    res = _api.fetch_url(url)
+    assert res == expected

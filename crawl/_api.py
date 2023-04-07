@@ -154,7 +154,7 @@ def fetch_url(url, dry_run=False):
     """
     # exit early if url is a pdf or an instagram page
     # as we're unable to crawl those atm
-    if url.endswith("pdfs"):
+    if url.endswith(".pdf"):
         logger.warning("cannot parse, URL is a PDF: %s", url)
         return {}
 
