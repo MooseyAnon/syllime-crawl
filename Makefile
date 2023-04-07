@@ -11,6 +11,9 @@ check-pycodestyle: venv
 check-pylint-main: venv
 	venv/bin/python -m pylint sylli_crawl crawl
 
+check-isort: venv
+	venv/bin/python -m isort sylli_crawl crawl --check --diff --skip venv
+
 check-tests: venv
 	venv/bin/python -m pytest -v
 
@@ -28,4 +31,5 @@ venv/bin/activate: requirements.txt
 	venv/bin/python -m pip install -r $< --progress-bar off
 	touch $@
 
-.PHONY: check check-coding-standards check-pylint-main check-tests venv
+.PHONY: check check-coding-standards check-pylint-main check-isort \
+	check-tests venv
