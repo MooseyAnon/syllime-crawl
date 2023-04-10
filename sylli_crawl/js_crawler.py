@@ -308,9 +308,22 @@ class YoutubeCrawler(crawler_base.Crawler):
             return metadata
 
         if self.parsed_html and not self.has_captcha(self.parsed_html):
+            # temp solution till refactor
+            try:
+                title = self._video_title(self.parsed_html)
+                channel_name = self._channel_name(self.parsed_html)
+            # we've received a weird page that we cant parse or something
+            # on the page has changed
+            except AttributeError as e:
+                logger.error(e)
+                # double check we actually have any source code
+                if self.parsed_html:
+                    helpers.dump_pretty_html(self.parsed_html, "youtube")
+
+                return metadata
             metadata["url"] = url
-            metadata["title"] = self._video_title(self.parsed_html)
-            metadata["author"] = self._channel_name(self.parsed_html)
+            metadata["title"] = title
+            metadata["author"] = channel_name
             metadata["type"] = "V"
             metadata["source"] = f"{self.scheme}://{self.netloc}"
 

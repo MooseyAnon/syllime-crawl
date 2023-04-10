@@ -57,12 +57,22 @@ class HTMLCrawler(crawler_base.Crawler):
             helpers.write_error_urls(url)
 
         if resp:
-            title = self.parse_page(resp.text)
-            # add metadata
-            metadata["url"] = url
-            metadata["title"] = title
-            metadata["author"] = self.netloc
-            metadata["type"] = "A"
-            metadata["source"] = self.netloc
+            # temp solution till refactor
+            try:
+                title = self.parse_page(resp.text)
+                # add metadata
+                metadata["url"] = url
+                metadata["title"] = title
+                metadata["author"] = self.netloc
+                metadata["type"] = "A"
+                metadata["source"] = self.netloc
+            # we've received a weird page that we cant parse or something
+            # on the page has changed
+            except AttributeError as e:
+                logger.error(e)
+                # double check we actually have any source code
+                if resp:
+                    helpers.dump_pretty_html(
+                        BeautifulSoup(resp.text, 'lxml'), "html")
 
         return metadata
